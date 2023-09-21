@@ -42,14 +42,17 @@ AutoA = "AutoA.png"
 qr_imagen = "reducida.png"
 PROMOCIONES = ('prom 1')
 
-nombre_estacionamiento = 'Amores'
+nombre_estacionamiento = 'INSURGENTES'
 estilo = ('Arial', 12)
-
+font_promo = ('Arial', 9, "bold")
 from controller_email import main
+
+send_data = True
 
 class FormularioOperacion:
     def __init__(self):
-        atexit.register(main)
+        if send_data:
+            atexit.register(main)
 
         self.controlador_crud_pensionados = Pensionados()
         self.folio_auxiliar = None
@@ -223,9 +226,29 @@ class FormularioOperacion:
         self.label4=ttk.Label(self.labelframe2, text="Salio:")
         self.label4.grid(column=0, row=2, padx=4, pady=4)
 
+        # Crear el LabelFrame "promociones"
+        self.frame_promociones = tk.LabelFrame(self.FOLIO_QR, text="Promociones")
+        self.frame_promociones.grid(column=0, row=1, padx=5, pady=5)
 
-        self.labelpromo=ttk.LabelFrame(self.FOLIO_QR, text="Leer el QR de Promocion")
-        self.labelpromo.grid(column=0, row=1, padx=5, pady=10, sticky=tk.NW)
+        self.frame_promociones_botones = Frame(self.frame_promociones)
+        self.frame_promociones_botones.grid(column=0, row=0, padx=5, pady=5)
+
+        # Botón "Promo SEMOVI"
+        self.button_promo_SEMOVI = tk.Button(
+            self.frame_promociones_botones,
+            text="Promo\nPERSONAL DE SEMOVI",
+            command=self.promo_SEMOVI,
+            # width=10,
+            height=2,
+            anchor="center",
+            bg="#FF8000",
+            font=font_promo
+        )
+        self.button_promo_SEMOVI.grid(column=0, row=0, padx=5, pady=5, sticky=tk.NSEW)
+
+        self.labelpromo=ttk.LabelFrame(self.frame_promociones, text="Leer el QR de Promocion")
+        self.labelpromo.grid(column=0, row=1, padx=5, pady=5, sticky=tk.NSEW)
+
         self.promolbl1=ttk.Label(self.labelpromo, text="Codigo QR")
         self.promolbl1.grid(column=0, row=0, padx=4, pady=4)
         self.promolbl2=ttk.Label(self.labelpromo, text="Tipo Prom")
@@ -663,27 +686,30 @@ class FormularioOperacion:
             # Calcula el importe a pagar según la tabla de precios
             if self.horas_dentro <= 3:
 
-                importe = (self.horas_dentro * 28) + (cuarto_hora * 7)
-                if self.horas_dentro == 2 and cuarto_hora == 4:
+                if self.horas_dentro <= 2 and cuarto_hora < 4:
+                    importe = (self.horas_dentro * 28) + (cuarto_hora * 7)
+
+                elif self.horas_dentro == 2 and cuarto_hora == 4:
                     importe = 77
 
-                if self.horas_dentro == 3 and self.minutos_dentro >= 0:
-                    importe = 80
+                elif self.horas_dentro == 3 and self.minutos_dentro == 0:
+                    importe = 84
+                else:
+                    importe = 90
 
             else:
                 if 3 <= self.horas_dentro < 12:
-                    importe = 80
+                    importe = 90
 
-                elif 12 <= self.horas_dentro <= 14:
-                    importe = (self.horas_dentro * 28) + (cuarto_hora * 7) - 256
-                    if cuarto_hora == 4:
-                        importe = 160
+                elif 12 <= self.horas_dentro <= 24:
+                    if self.horas_dentro == 12 and self.minutos_dentro == 0:
+                        importe = 90
 
-                else:
-                    importe = 160
+                    else:
+                        importe = 250
 
                 # Calcula el importe total a pagar
-            importe = (self.dias_dentro * 160) + importe
+            importe = (self.dias_dentro * 250) + importe
 
         # Establecer el importe y mostrarlo
         self.mostrar_importe(importe)
@@ -2747,6 +2773,54 @@ class FormularioOperacion:
         """
         self.importe.set(text_importe)
         self.IImporte.config(text=self.importe.get())
+
+    def promo_SEMOVI(self, promo:str = "SEMOVI"):
+        if self.folio.get() == "":
+            mb.showwarning("Error", "Primero escanee un boleto para aplicar la promoción")
+            self.limpiar_campos()
+            return
+
+        # Valida si el boleto está cobrado como perdido
+        TarifaPreferente = self.TarifaPreferente.get()
+        if TarifaPreferente == "Per":
+            mb.showerror("Error", "A los boletos cobrados como perdidos no se pueden aplicar promociones")
+            self.promo.set('')
+            self.promo_auxiliar.set('')
+            self.entrypromo.focus()
+            return
+
+        # Valida que solo se pueda aplicar una promoción por boleto
+        if TarifaPreferente not in ["Normal", "Danado"]:
+            mb.showerror("Error", "Solo se puede aplicar una promoción por boleto")
+            self.promo.set('')
+            self.entrypromo.focus()
+            return
+
+        # Valida si realmente se quiere aplicar la promoción
+        if mb.askyesno("Advertencia", f"¿Esta seguro de querer aplicar la promoción [{promo}] a este boleto?") is False:
+            return
+
+        text_promo = promo
+
+        if self.horas_dentro <= 2:
+            if self.horas_dentro == 2 and self.minutos_dentro > 0:
+                importe = int(self.importe.get()) - 16
+
+            else:
+                importe = 60
+        else:
+            importe = int(self.importe.get()) - 16
+
+
+        # Añade "Danado" a la descripción de la promoción si el boleto está marcado como "Danado"
+        if TarifaPreferente == "Danado":
+            text_promo = text_promo + TarifaPreferente
+
+        # Establece el tipo de promoción y muestra el importe actualizado
+        self.TarifaPreferente.set(text_promo)
+
+        # Establecer el importe y mostrarlo
+        self.mostrar_importe(importe)
 
 # aplicacion1=FormularioOperacion()
 
