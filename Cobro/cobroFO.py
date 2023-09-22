@@ -666,50 +666,44 @@ class FormularioOperacion:
         self.TiempoTotal.set(TiempoTotal)
         self.TiempoTotal_auxiliar.set(self.TiempoTotal.get()[:-3])
 
+        # Calcula la tarifa y el importe a pagar
+        minutos = 0
+
+        if self.minutos_dentro == 0:
+            minutos = 0
+        elif self.minutos_dentro < 16 and self.minutos_dentro >= 1:
+            minutos = 1
+        elif self.minutos_dentro < 31 and self.minutos_dentro >= 16:
+            minutos = 2
+        elif self.minutos_dentro < 46 and self.minutos_dentro >= 31:
+            minutos = 3
+        elif self.minutos_dentro <= 59 and self.minutos_dentro >= 46:
+            minutos = 4
+
         importe = 0
+
         if self.dias_dentro == 0 and self.horas_dentro == 0:
+            # Si la permanencia es menor a 1 hora, se aplica una tarifa fija de 28 unidades
             importe = 28
+
+        # Calcula el importe a pagar según la tabla de precios
+        elif self.horas_dentro < 3:
+            importe = (self.horas_dentro * 28) + (minutos * 7)
+
+        elif self.horas_dentro >= 3 and self.horas_dentro <= 12:
+            importe = 90
+
+            if self.horas_dentro == 3 and self.minutos_dentro == 0:
+                importe = 84
+
+            elif self.horas_dentro == 12 and minutos == 1:
+                importe = 250
+
         else:
+            importe = 250
 
-            # Calcula la tarifa y el importe a pagar
-            if self.minutos_dentro == 0:
-                cuarto_hora = 0
-            elif self.minutos_dentro < 16 and self.minutos_dentro >= 1:
-                cuarto_hora = 1
-            elif self.minutos_dentro < 31 and self.minutos_dentro >= 16:
-                cuarto_hora = 2
-            elif self.minutos_dentro < 46 and self.minutos_dentro >= 31:
-                cuarto_hora = 3
-            elif self.minutos_dentro <= 59 and self.minutos_dentro >= 46:
-                cuarto_hora = 4
-
-            # Calcula el importe a pagar según la tabla de precios
-            if self.horas_dentro <= 3:
-
-                if self.horas_dentro <= 2 and cuarto_hora < 4:
-                    importe = (self.horas_dentro * 28) + (cuarto_hora * 7)
-
-                elif self.horas_dentro == 2 and cuarto_hora == 4:
-                    importe = 77
-
-                elif self.horas_dentro == 3 and self.minutos_dentro == 0:
-                    importe = 84
-                else:
-                    importe = 90
-
-            else:
-                if 3 <= self.horas_dentro < 12:
-                    importe = 90
-
-                elif 12 <= self.horas_dentro <= 24:
-                    if self.horas_dentro == 12 and self.minutos_dentro == 0:
-                        importe = 90
-
-                    else:
-                        importe = 250
-
-                # Calcula el importe total a pagar
-            importe = (self.dias_dentro * 250) + importe
+        # Calcula el importe total a pagar
+        importe = (self.dias_dentro * 250) + importe
 
         # Establecer el importe y mostrarlo
         self.mostrar_importe(importe)
@@ -2802,15 +2796,29 @@ class FormularioOperacion:
 
         text_promo = promo
 
-        if self.horas_dentro <= 2:
-            if self.horas_dentro == 2 and self.minutos_dentro > 0:
-                importe = int(self.importe.get()) - 16
+        # Calcula la tarifa y el importe a pagar
+        minutos = 0
 
-            else:
-                importe = 60
+        if self.minutos_dentro == 0:
+            minutos = 0
+        elif self.minutos_dentro < 16 and self.minutos_dentro >= 1:
+            minutos = 1
+        elif self.minutos_dentro < 31 and self.minutos_dentro >= 16:
+            minutos = 2
+        elif self.minutos_dentro < 46 and self.minutos_dentro >= 31:
+            minutos = 3
+        elif self.minutos_dentro <= 59 and self.minutos_dentro >= 46:
+            minutos = 4
+
+        importe = 0
+
+        if self.horas_dentro <= 12:
+            importe = 60
+            if self.horas_dentro == 12 and self.minutos_dentro > 0:
+                importe = 60 + (self.dias_dentro * 250) + ((self.horas_dentro - 12) * 28) + (minutos * 7)
+
         else:
-            importe = int(self.importe.get()) - 16
-
+            importe = 60 + (self.dias_dentro * 250) + ((self.horas_dentro - 12) * 28) + (minutos * 7)
 
         # Añade "Danado" a la descripción de la promoción si el boleto está marcado como "Danado"
         if TarifaPreferente == "Danado":
