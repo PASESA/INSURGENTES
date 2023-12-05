@@ -38,8 +38,8 @@ data_rinter = (0x04b8, 0x0e15, 0)
 
 contraseña_pensionados = "P4s3"
 
-valor_tarjeta = 116
-valor_reposiion_tarjeta = 232
+valor_tarjeta = 0
+valor_reposiion_tarjeta = 0
 penalizacion_diaria_pension = 0
 
 logo_1 = "LOGO1.jpg"
@@ -220,7 +220,6 @@ class FormularioOperacion:
         printer.cut()
         printer.image(logo_1)
         printer.text("--------------------------------------\n")
-        printer.set(align="center")
         printer.text("BOLETO DE ENTRADA\n")
         printer.text('Entro: '+horaentrada[:-3]+'\n')
         printer.text('Placas '+placa+'\n')
@@ -961,7 +960,7 @@ class FormularioOperacion:
         numtarjeta = self.folio.get()
 
         # Convierte el número de tarjeta en un entero
-        tarjeta = int(numtarjeta[position_id:])
+        tarjeta = numtarjeta[position_id:]
 
         # Valida si existe un pensionado con ese número de tarjeta
         respuesta = self.DB.ValidarTarj(tarjeta)
@@ -1627,7 +1626,7 @@ class FormularioOperacion:
 
         ##la fecha final de este corte que es la actual
         fechaDECorte = self.FechaCorte.get()
-     
+
         ######el importe se obtiene de la suma
         importe_corte = self.ImporteCorte.get()
         AEE = self.DB.CuantosAutosdentro()
@@ -2306,7 +2305,7 @@ class FormularioOperacion:
         position_id = len(f"Pension-{nombre_estacionamiento}-")
 
         # Convierte el número de tarjeta en un entero
-        numtarjeta = int(numtarjeta[position_id:])
+        numtarjeta = numtarjeta[position_id:]
 
         resultado = self.DB.ValidarRFID(numtarjeta)
 
@@ -2435,7 +2434,7 @@ class FormularioOperacion:
             position_id = len(f"Pension-{nombre_estacionamiento}-")
 
             # Convierte el número de tarjeta en un entero
-            tarjeta = int(numtarjeta[position_id:])
+            tarjeta = numtarjeta[position_id:]
 
             Existe = self.DB.ValidarRFID(tarjeta)[0][0]
 
@@ -2464,6 +2463,7 @@ class FormularioOperacion:
             pago = 0
             if Estatus == "Inactiva":
                 pago = self.calcular_pago_media_pension(monto)
+                nummes = 1
                 total = pago + valor_tarjeta
                 pago = total
                 if cortesia == "Si":
@@ -2902,7 +2902,7 @@ class FormularioOperacion:
         position_id = len(f"Pension-{nombre_estacionamiento}-")
 
         # Convierte el número de tarjeta en un entero
-        tarjeta = int(numero_tarjeta[position_id:])
+        tarjeta = numero_tarjeta[position_id:]
 
         if len(contraseña) == 0:
             mb.showwarning("Error", "Ingrese la contraseña para agregar un pensionado")
@@ -2976,7 +2976,7 @@ class FormularioOperacion:
         try:
             position_id = len(f"Pension-{nombre_estacionamiento}-")
             numtarjeta = self.Placa.get()
-            ID_pen = int(numtarjeta[position_id:])
+            ID_pen = numtarjeta[position_id:]
 
             print(ID_pen)
             Existe = self.DB.ValidarPen(ID_pen)
